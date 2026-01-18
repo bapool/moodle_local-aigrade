@@ -13,7 +13,6 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
-
 /**
  * Restore task for local_aigrade plugin
  *
@@ -23,8 +22,6 @@
  */
 
 defined('MOODLE_INTERNAL') || die();
-
-require_once($CFG->dirroot . '/backup/moodle2/restore_local_plugin.class.php');
 
 /**
  * Restore plugin class for local_aigrade
@@ -58,27 +55,61 @@ class restore_local_aigrade_plugin extends restore_local_plugin {
         $data = (object)$data;
         $oldid = $data->id;
         
-        // Get the new assignment ID (it will be different after restore).
-        $newassignmentid = $this->task->get_activityid();
-        $data->assignmentid = $newassignmentid;
-        
-        // Check if config already exists for this assignment (shouldn't happen, but be safe).
-        $existing = $DB->get_record('local_aigrade_config', ['assignmentid' => $newassignmentid]);
-        
-        if ($existing) {
-            // Update existing record.
-            $data->id = $existing->id;
-            $data->timemodified = time();
-            $DB->update_record('local_aigrade_config', $data);
-        } else {
-            // Insert new record.
-            unset($data->id);
-            $data->timecreated = time();
-            $data->timemodified = time();
-            $DB->insert_record('local_aigrade_config', $data);
+        // Store data temporarily - we'll process it after the module is fully restored
+        if (!isset($this->aigrade_configs)) {
+            $this->aigrade_configs = [];
         }
         
-        // Note: Rubric files are not restored.
-        // Teachers will need to re-upload rubric files after restore if needed.
+        $this->aigrade_configs[] = $data;
+        
+        //error_log('AI Grade Restore Debug - Stored config for later processing, old ID: ' . $oldid);
+    }
+    
+    /**
+     * Process after execution - when the module is fully created
+     */
+    public function after_restore_module() {
+        global $DB;
+        
+        if (empty($this->aigrade_configs)) {
+            return;
+        }
+        
+        // Get the course module ID
+        $cmid = $this->task->get_moduleid();
+        
+        //error_log('AI Grade Restore Debug - after_execute - CM ID: ' . $cmid);
+        
+        // Get the assignment instance ID from the course module
+        $cm = $DB->get_record('course_modules', ['id' => $cmid], '*', MUST_EXIST);
+        $newassignmentid = $cm->instance;
+        
+        //error_log('AI Grade Restore Debug - after_execute - Assignment ID: ' . $newassignmentid);
+        
+        // Process all stored configs
+        foreach ($this->aigrade_configs as $data) {
+            $oldid = $data->id;
+            $data->assignmentid = $newassignmentid;
+            
+            // Check if config already exists
+            $existing = $DB->get_record('local_aigrade_config', ['assignmentid' => $newassignmentid]);
+            
+            if ($existing) {
+                //error_log('AI Grade Restore Debug - Updating existing record ID: ' . $existing->id);
+                $data->id = $existing->id;
+                $data->timemodified = time();
+                $DB->update_record('local_aigrade_config', $data);
+            } else {
+                //error_log('AI Grade Restore Debug - Creating new record');
+                unset($data->id);
+                $data->timecreated = time();
+                $data->timemodified = time();
+                $data->rubricfile = null;
+                
+                $newid = $DB->insert_record('local_aigrade_config', $data);
+                //error_log('AI Grade Restore Debug - New record ID: ' . $newid);
+                $this->set_mapping('local_aigrade_config', $oldid, $newid);
+            }
+        }
     }
 }

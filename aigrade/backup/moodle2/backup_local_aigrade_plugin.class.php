@@ -13,7 +13,6 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
-
 /**
  * Backup task for local_aigrade plugin
  *
@@ -25,18 +24,9 @@
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * Backup plugin class for local_aigrade - only for assign modules
+ * Backup plugin class for local_aigrade - extends assign activity
  */
 class backup_local_aigrade_plugin extends backup_local_plugin {
-
-    /**
-     * Returns if this plugin applies to the given module
-     *
-     * @return bool
-     */
-    public static function applies_to_module() {
-        return 'assign';
-    }
 
     /**
      * Define the structure for backing up the plugin data
@@ -63,6 +53,7 @@ class backup_local_aigrade_plugin extends backup_local_plugin {
             'instructions_with_rubric',
             'instructions_without_rubric',
             'grade_level',
+            'rubricfile',
             'timecreated',
             'timemodified'
         ]);

@@ -26,16 +26,18 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
     return {
         /**
          * Initialize the grade bulk button
-         * @param {string} buttonUrl The URL for the AJAX request
+         * @param {int} cmid The course module ID
          * @param {string} buttonText The text to display on the button
-         * @param {string} sesskey The session key
          */
-        init: function(buttonUrl, buttonText, sesskey) {
-            $(document).ready(function() {
+        init: function(cmid, buttonText) {
+
+            var insertButton = function() {
+                // Don't insert if button already exists
                 if ($('.aigrade-button-injected').length > 0) {
-                    return;
+                    return true;
                 }
 
+                // Create the button
                 var button = $('<button>')
                     .attr('type', 'button')
                     .addClass('btn btn-primary aigrade-button-injected')
@@ -44,76 +46,122 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                         var btn = $(this);
                         var originalText = btn.text();
 
-                        Str.get_string('confirm_bulk_grade', 'local_aigrade').done(function(confirmMsg) {
-                            if (!confirm(confirmMsg)) {
+                        Str.get_strings([
+                            {key: 'confirm_bulk_grade', component: 'local_aigrade'},
+                            {key: 'grading_in_progress', component: 'local_aigrade'},
+                            {key: 'success_graded_count', component: 'local_aigrade'},
+                            {key: 'error_with_message', component: 'local_aigrade'},
+                            {key: 'error_unknown', component: 'local_aigrade'},
+                            {key: 'error_server_communication', component: 'local_aigrade'}
+                        ]).done(function(strings) {
+                            if (!confirm(strings[0])) {
                                 return;
                             }
 
-                            btn.prop('disabled', true).text('Grading all submissions...');
+                            btn.prop('disabled', true).text(strings[1]);
 
-                            $.ajax({
-                                url: buttonUrl + '&action=grade&sesskey=' + sesskey,
-                                method: 'POST',
-                                dataType: 'json',
-                                success: function(response) {
-                                    if (response.success) {
-                                        Notification.addNotification({
-                                            message: 'Successfully graded ' + response.count + ' submission(s).',
-                                            type: 'success'
-                                        });
-                                        window.location.reload();
-                                    } else {
-                                        Notification.addNotification({
-                                            message: 'Error: ' + (response.error || 'Unknown error occurred'),
-                                            type: 'error'
-                                        });
-                                        btn.prop('disabled', false).text(originalText);
-                                    }
-                                },
-                                error: function(xhr, status, error) {
+                            Ajax.call([{
+                                methodname: 'local_aigrade_grade_bulk',
+                                args: {
+                                    cmid: cmid
+                                }
+                            }])[0].done(function(response) {
+                                if (response.success) {
                                     Notification.addNotification({
-                                        message: 'Error communicating with server: ' + error,
+                                        message: strings[2].replace('{$a}', response.count),
+                                        type: 'success'
+                                    });
+                                    window.location.reload();
+                                } else {
+                                    var errorMsg = response.error || strings[4];
+                                    Notification.addNotification({
+                                        message: strings[3].replace('{$a}', errorMsg),
                                         type: 'error'
                                     });
                                     btn.prop('disabled', false).text(originalText);
                                 }
+                            }).fail(function(error) {
+                                var errorMsg = error.message || strings[4];
+                                Notification.addNotification({
+                                    message: strings[5].replace('{$a}', errorMsg),
+                                    type: 'error'
+                                });
+                                btn.prop('disabled', false).text(originalText);
                             });
                         }).fail(function() {
-                            // Fallback if string fetch fails
+                            // Fallback if string fetch fails - use English defaults
                             if (!confirm('Grade all ungraded submissions with AI? This may take a few moments.')) {
                                 return;
                             }
 
                             btn.prop('disabled', true).text('Grading all submissions...');
 
-                            $.ajax({
-                                url: buttonUrl + '&action=grade&sesskey=' + sesskey,
-                                method: 'POST',
-                                dataType: 'json',
-                                success: function(response) {
-                                    if (response.success) {
-                                        alert('Successfully graded ' + response.count + ' submission(s).');
-                                        window.location.reload();
-                                    } else {
-                                        alert('Error: ' + (response.error || 'Unknown error occurred'));
-                                        btn.prop('disabled', false).text(originalText);
-                                    }
-                                },
-                                error: function(xhr, status, error) {
-                                    alert('Error communicating with server: ' + error);
+                            Ajax.call([{
+                                methodname: 'local_aigrade_grade_bulk',
+                                args: {
+                                    cmid: cmid
+                                }
+                            }])[0].done(function(response) {
+                                if (response.success) {
+                                    alert('Successfully graded ' + response.count + ' submission(s).');
+                                    window.location.reload();
+                                } else {
+                                    alert('Error: ' + (response.error || 'Unknown error occurred'));
                                     btn.prop('disabled', false).text(originalText);
                                 }
+                            }).fail(function(error) {
+                                alert('Error communicating with server: ' + (error.message || 'Unknown error'));
+                                btn.prop('disabled', false).text(originalText);
                             });
                         });
                     });
 
+                // Try multiple insertion points
+                var inserted = false;
+
+                // Option 1: Tertiary navigation (preferred in Moodle 4.x)
                 if ($('.tertiary-navigation').length) {
                     $('.tertiary-navigation').first().prepend($('<div>').css('display', 'inline-block').append(button));
-                } else if ($('#page-header').length) {
-                    $('#page-header').first().after($('<div>').addClass('alert alert-info').css('margin', '15px').append(button));
-                } else {
-                    $('#page-content').prepend($('<div>').addClass('alert alert-info').css('margin', '15px').append(button));
+                    inserted = true;
                 }
+
+                // Option 2: After page header
+                if (!inserted && $('#page-header').length) {
+                    $('#page-header').first().after($('<div>').addClass('alert alert-info').css('margin', '15px').append(button));
+                    inserted = true;
+                }
+
+                // Option 3: Prepend to page content
+                if (!inserted && $('#page-content').length) {
+                    $('#page-content').prepend($('<div>').addClass('alert alert-info').css('margin', '15px').append(button));
+                    inserted = true;
+                }
+
+                return inserted;
+            };
+
+            // Wait for DOM to be ready, then try to insert
+            $(document).ready(function() {
+                // Try immediately
+                var inserted = insertButton();
+
+                // If not inserted, set up interval checking
+                if (!inserted) {
+                    var checkCount = 0;
+                    var maxChecks = 10; // Check for 5 seconds
+
+                    var insertInterval = setInterval(function() {
+                        checkCount++;
+                        if (insertButton() || checkCount >= maxChecks) {
+                            clearInterval(insertInterval);
+                        }
+                    }, 500);
+                }
+            });
+
+            // Also try on window load as backup
+            $(window).on('load', function() {
+                insertButton();
             });
         }
     };

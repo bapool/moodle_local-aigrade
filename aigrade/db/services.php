@@ -15,17 +15,30 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version information for local_aigrade
+ * External services for AI Grade
  *
  * @package    local_aigrade
- * @copyright  2026 Brian A. Pool, National Trail Local Schools
+ * @copyright  2025 Brian A. Pool, National Trail Local Schools
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->component = 'local_aigrade';
-$plugin->requires = 2024042200;  // Moodle 4.5
-$plugin->maturity = MATURITY_BETA;
-$plugin->version = 2026011801;  // YYYYMMDDXX format (2026-01-18, version 00)
-$plugin->release = 'v1.4.2';
+$functions = [
+    'local_aigrade_grade_bulk' => [
+        'classname'   => 'local_aigrade\external\grade_bulk',
+        'methodname'  => 'execute',
+        'description' => 'Grade all ungraded submissions with AI',
+        'type'        => 'write',
+        'ajax'        => true,
+        'capabilities'=> 'local/aigrade:grade',
+    ],
+    'local_aigrade_grade_single' => [
+        'classname'   => 'local_aigrade\external\grade_single',
+        'methodname'  => 'execute',
+        'description' => 'Grade a single submission with AI',
+        'type'        => 'write',
+        'ajax'        => true,
+        'capabilities'=> 'local/aigrade:grade',
+    ],
+];

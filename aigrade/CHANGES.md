@@ -1,7 +1,31 @@
-# Changelog
+## [1.4.2] - 2026-01-18
+### Fixed
+- Fixed Backup/Restore API implementation (Issue #11)
+  - Updated backup class to include `rubricfile` field in backup structure
+  - Fixed restore process to correctly map assignment instance IDs
+  - Changed from `process_local_aigrade_config` immediate processing to deferred processing in `after_restore_module()` hook
+  - Ensured duplicated assignments now properly restore AI Grade configuration (enabled status, grade level, instructions)
+  - Note: Rubric files are not backed up/restored - teachers must re-upload rubrics after course restore/duplication
+  
+## [1.4.1] - 2026-01-18
+### Fixed
+- Fixed hard-coded language strings in JavaScript files (Issue #9)
+  - Moved all user-facing strings in `amd/src/grade_bulk.js` to language file
+  - Moved all user-facing strings in `amd/src/grade_single.js` to language file
+  - Added new language strings: `grading_in_progress`, `success_graded_count`, `error_with_message`, `error_unknown`, `error_server_communication`, `grading_single_in_progress`
+  - All strings now properly use `Str.get_strings()` for localization support
+  - Maintained English fallback for compatibility if string loading fails
 
-All notable changes to the AI Grade plugin will be documented in this file.
-
+### Changed
+- Updated AJAX implementation to use External Services (Issue #10)
+  - Created `classes/external/grade_bulk.php` external service class
+  - Created `classes/external/grade_single.php` external service class
+  - Created `db/services.php` to register external services
+  - Updated `amd/src/grade_bulk.js` to use `Ajax.call()` with external service
+  - Updated `amd/src/grade_single.js` to use `Ajax.call()` with external service
+  - Updated `lib.php` to pass cmid and userid parameters instead of URLs
+  - Improved security and compatibility with Moodle standards
+  - Old AJAX endpoint files (`grade.php`, `grade_single.php`) maintained for backwards compatibility
 ## [1.4.0] - 2026-01-16
 
 ### Fixed
