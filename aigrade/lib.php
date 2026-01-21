@@ -86,6 +86,23 @@ function local_aigrade_coursemodule_standard_elements($formwrapper, $mform) {
         $mform->setDefault('aigrade_grade_level', '9');
     }
     
+    // Grading strictness selector
+    $strictness_levels = [
+        'very_lenient' => get_string('strictness_very_lenient', 'local_aigrade'),
+        'lenient' => get_string('strictness_lenient', 'local_aigrade'),
+        'standard' => get_string('strictness_standard', 'local_aigrade'),
+        'rigorous' => get_string('strictness_rigorous', 'local_aigrade'),
+        'very_rigorous' => get_string('strictness_very_rigorous', 'local_aigrade'),
+    ];
+    $mform->addElement('select', 'aigrade_grading_strictness', get_string('grading_strictness', 'local_aigrade'), $strictness_levels);
+    $mform->addHelpButton('aigrade_grading_strictness', 'grading_strictness', 'local_aigrade');
+    $mform->disabledIf('aigrade_grading_strictness', 'aigrade_enabled');
+    if ($aiconfig && isset($aiconfig->grading_strictness)) {
+        $mform->setDefault('aigrade_grading_strictness', $aiconfig->grading_strictness);
+    } else {
+        $mform->setDefault('aigrade_grading_strictness', 'standard');
+    }
+    
     // AI instructions WITH rubric
     $mform->addElement('textarea', 'aigrade_instructions_with_rubric', 
         get_string('aigrade_instructions_with_rubric_field', 'local_aigrade'),
@@ -198,6 +215,7 @@ function local_aigrade_coursemodule_edit_post_actions($data, $course) {
     $record->assignmentid = $assignmentid;
     $record->enabled = isset($data->aigrade_enabled) ? $data->aigrade_enabled : 0;
     $record->grade_level = isset($data->aigrade_grade_level) ? $data->aigrade_grade_level : '9';
+    $record->grading_strictness = isset($data->aigrade_grading_strictness) ? $data->aigrade_grading_strictness : 'standard';
     $record->instructions_with_rubric = isset($data->aigrade_instructions_with_rubric) ? $data->aigrade_instructions_with_rubric : '';
     $record->instructions_without_rubric = isset($data->aigrade_instructions_without_rubric) ? $data->aigrade_instructions_without_rubric : '';
     $record->timemodified = time();

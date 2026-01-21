@@ -2,6 +2,24 @@
 
 All notable changes to the AI Grade plugin will be documented in this file.
 
+## [1.6.0] - 2026-01-20
+
+### Added
+- **Grading Strictness Override**: Teachers can now override the default grade-level strictness
+  - New dropdown in assignment settings: "Grading strictness"
+  - Five levels: Very lenient, Lenient, Standard (default), Rigorous, Very rigorous
+  - "Standard" uses the automatic Lexile-based strictness appropriate for the grade level
+  - Teachers can make grading easier or harder regardless of grade level
+  - Example: Grade 3 teacher can select "Rigorous" for advanced students
+  - Example: Grade 12 teacher can select "Lenient" to be more encouraging
+  - Stored in database field `grading_strictness` with proper upgrade script
+
+### Technical
+- Added `grading_strictness` field to `local_aigrade_config` table via database upgrade
+- Added 7 new language strings for strictness levels and help text
+- Modified grader.php to check for teacher override before applying grade-level defaults
+- Database upgrade version: 2026012000
+
 ## [1.5.0] - 2026-01-20
 
 ### Added

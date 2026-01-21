@@ -113,5 +113,20 @@ function xmldb_local_aigrade_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2025012005, 'local', 'aigrade');
     }
 
+    if ($oldversion < 2026012000) {
+        // Add grading_strictness field to local_aigrade_config
+        $table = new xmldb_table('local_aigrade_config');
+        
+        // Field: grading_strictness - allows teachers to override grade-level strictness
+        // Default 'standard' means use the grade-level appropriate strictness
+        $field = new xmldb_field('grading_strictness', XMLDB_TYPE_CHAR, '20', null, null, null, 'standard', 'grade_level');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Aigrade savepoint reached.
+        upgrade_plugin_savepoint(true, 2026012000, 'local', 'aigrade');
+    }
+
     return true;
 }
