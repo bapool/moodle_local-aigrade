@@ -86,7 +86,7 @@ $string['file_extraction_error'] = 'Could not extract text from file: {$a}';
 $string['unsupported_file_type'] = 'File type not supported for AI grading: {$a}';
 $string['aigrade_warning'] = 'AI grading warning';
 $string['aigrade_warning_text'] = '<strong>Important:</strong> Always review AI-generated grades and feedback. AI grading works best for text-based assignments and cannot evaluate images, formatting, or visual design.';
-$string['error_no_submission'] = 'This student has not submitted any text for this assignment yet.';
+$string['error_no_submission'] = 'This student has not submitted any text for this assignment yet.  You may need to refresh the page if there is a submission.';
 $string['error_no_feedback'] = 'AI did not return feedback';
 $string['error_invalid_action'] = 'Invalid action';
 

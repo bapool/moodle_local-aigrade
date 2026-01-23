@@ -12,6 +12,7 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
 /**
  * AMD module for AI Grade single submission button
  *
@@ -19,85 +20,84 @@
  * @copyright  2025 Brian A. Pool, National Trail Local Schools
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-define(['jquery', 'core/ajax', 'core/str'], function($, Ajax, Str) {
+
+define(['jquery'], function($) {
+
     return {
         /**
          * Initialize the grade single button
-         * @param {int} cmid The course module ID
-         * @param {int} userid The user ID of the student
+         * @param {string} buttonUrl The URL for the AJAX request
          * @param {string} buttonText The text to display on the button
+         * @param {string} sesskey The session key
          */
-        init: function(cmid, userid, buttonText) {
+        init: function(buttonUrl, buttonText, sesskey) {
+
             var insertButton = function() {
                 // Don't insert if button already exists
                 if ($('.aigrade-single-button').length > 0) {
                     return true;
                 }
+
                 // Create the button
                 var button = $('<button>')
                     .attr('type', 'button')
                     .addClass('btn btn-primary aigrade-single-button')
                     .text(buttonText)
+                    .data('force-regrade', false)
                     .on('click', function() {
                         var btn = $(this);
                         var originalText = btn.text();
+                        var forceRegrade = btn.data('force-regrade');
 
-                        Str.get_strings([
-                            {key: 'grading_single_in_progress', component: 'local_aigrade'},
-                            {key: 'error_with_message', component: 'local_aigrade'},
-                            {key: 'error_unknown', component: 'local_aigrade'},
-                            {key: 'error_server_communication', component: 'local_aigrade'}
-                        ]).done(function(strings) {
-                            btn.prop('disabled', true).text(strings[0]);
+                        btn.prop('disabled', true).text('Grading...');
 
-                            Ajax.call([{
-                                methodname: 'local_aigrade_grade_single',
-                                args: {
-                                    cmid: cmid,
-                                    userid: userid
-                                }
-                            }])[0].done(function(response) {
+                        // Get userid from current page URL
+            var urlParams = new URLSearchParams(window.location.search);
+            var currentUserid = urlParams.get('userid');
+
+            var url = buttonUrl.replace('userid=0', 'userid=' + currentUserid) + '&action=grade&sesskey=' + sesskey;
+                        if (forceRegrade) {
+                            url += '&force_regrade=1';
+                        }
+
+                        $.ajax({
+                            url: url,
+                            method: 'POST',
+                            dataType: 'json',
+                            success: function(response) {
                                 if (response.success) {
                                     window.location.reload();
-                                } else {
-                                    var errorMsg = response.error || strings[2];
-                                    alert(strings[1].replace('{$a}', errorMsg));
-                                    btn.prop('disabled', false).text(originalText);
-                                }
-                            }).fail(function(error) {
-                                var errorMsg = error.message || strings[2];
-                                alert(strings[3].replace('{$a}', errorMsg));
-                                btn.prop('disabled', false).text(originalText);
-                            });
-                        }).fail(function() {
-                            // Fallback if string fetch fails - use English defaults
-                            btn.prop('disabled', true).text('Grading...');
+                                } else if (response.already_graded) {
+                                    // Submission is already graded
+                                    btn.prop('disabled', false);
+                                    btn.text('Regrade with AI');
+                                    btn.removeClass('btn-primary').addClass('btn-warning');
+                                    btn.data('force-regrade', true);
 
-                            Ajax.call([{
-                                methodname: 'local_aigrade_grade_single',
-                                args: {
-                                    cmid: cmid,
-                                    userid: userid
-                                }
-                            }])[0].done(function(response) {
-                                if (response.success) {
-                                    window.location.reload();
+                                    if (confirm('This submission is already graded. Do you want to regrade it with AI?')) {
+                                        // User confirmed, trigger another click
+                                        btn.click();
+                                    }
                                 } else {
                                     var errorMsg = response.error || 'Unknown error occurred';
                                     alert('Error: ' + errorMsg);
                                     btn.prop('disabled', false).text(originalText);
                                 }
-                            }).fail(function(error) {
-                                alert('Error communicating with server: ' + (error.message || 'Unknown error'));
+                            },
+                            error: function(xhr, status, error) {
+                                alert('Error communicating with server: ' + error);
                                 btn.prop('disabled', false).text(originalText);
-                            });
+                            }
                         });
                     });
+
                 var container = $('<div>')
                     .addClass('local_aigrade-button-container')
                     .append(button);
+
                 // Try multiple insertion points in order of preference
                 var inserted = false;
+
                 // Option 1: After grade input row (preferred - puts it right after the grade field)
                 var gradeInput = $('input[name="grade"]');
                 if (gradeInput.length) {
@@ -107,6 +107,7 @@ define(['jquery', 'core/ajax', 'core/str'], function($, Ajax, Str) {
                         inserted = true;
                     }
                 }
+
                 // Option 2: Before feedback section (if grade input not found)
                 if (!inserted) {
                     var feedbackSection = $('div[id*="fitem_id_assignfeedbackcomments"]');
@@ -115,6 +116,7 @@ define(['jquery', 'core/ajax', 'core/str'], function($, Ajax, Str) {
                         inserted = true;
                     }
                 }
+
                 // Option 3: Inside grade panel
                 if (!inserted) {
                     var gradePanel = $('[data-region="grade-panel"]');
@@ -123,6 +125,7 @@ define(['jquery', 'core/ajax', 'core/str'], function($, Ajax, Str) {
                         inserted = true;
                     }
                 }
+
                 // Option 4: Fallback to main content area
                 if (!inserted) {
                     var mainContent = $('#region-main-box, #region-main, [role="main"]').first();
@@ -131,31 +134,39 @@ define(['jquery', 'core/ajax', 'core/str'], function($, Ajax, Str) {
                         inserted = true;
                     }
                 }
+
                 return inserted;
             };
+
             // Try immediately when script loads
             setTimeout(insertButton, 100);
+
             // Wait for DOM to be ready
             $(document).ready(function() {
                 setTimeout(insertButton, 100);
             });
+
             // Wait for full page load
             $(window).on('load', function() {
                 setTimeout(insertButton, 200);
             });
+
             // Set up MutationObserver to watch for dynamic content
             var observer = new MutationObserver(function() {
                 insertButton();
             });
+
             // Start observing the document body for changes
             observer.observe(document.body, {
                 childList: true,
                 subtree: true
             });
+
             // Also re-insert after AJAX requests complete
             $(document).ajaxComplete(function() {
                 setTimeout(insertButton, 100);
             });
+
             // Periodic checking as final fallback
             var checkCount = 0;
             var checkInterval = setInterval(function() {

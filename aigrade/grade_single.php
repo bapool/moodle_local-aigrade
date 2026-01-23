@@ -30,6 +30,7 @@ require_once($CFG->dirroot . '/mod/assign/locallib.php');
 $cmid = required_param('id', PARAM_INT);
 $userid = required_param('userid', PARAM_INT);
 $action = optional_param('action', '', PARAM_ALPHA);
+$force_regrade = optional_param('force_regrade', 0, PARAM_INT);
 
 $cm = get_coursemodule_from_id('assign', $cmid, 0, false, MUST_EXIST);
 $course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
@@ -54,7 +55,7 @@ if ($action === 'grade') {
     require_once($CFG->dirroot . '/local/aigrade/classes/grader.php');
     
     $grader = new \local_aigrade\grader($assignment, $context, $aiconfig);
-    $result = $grader->grade_single_submission($userid);
+    $result = $grader->grade_single_submission($userid, (bool)$force_regrade);
     
     echo json_encode($result);
     die();

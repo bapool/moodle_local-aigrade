@@ -135,10 +135,24 @@ class grader {
      * @param int $userid The user ID to grade
      * @return array Result with success status and any errors
      */
-    public function grade_single_submission($userid) {
+    public function grade_single_submission($userid, $force_regrade = false) {
         global $USER;
         
         try {
+            // Check if already graded (unless force_regrade is true)
+            if (!$force_regrade) {
+                $grade = $this->assignment->get_user_grade($userid, false);
+                
+                // If graded (has a grade that's not -1, null, or empty)
+                if ($grade && $grade->grade != -1 && $grade->grade !== null && $grade->grade !== '') {
+                    return [
+                        'success' => false, 
+                        'already_graded' => true,
+                        'error' => 'This submission is already graded. Click again to regrade.'
+                    ];
+                }
+            }
+            
             // Get the rubric PDF or assignment description
             $rubric_text = $this->get_rubric_text();
             if (!$rubric_text) {
@@ -182,7 +196,7 @@ class grader {
             if ($feedback) {
                 // Save the grade and feedback
                 $this->save_grade($userid, $feedback);
-                return ['success' => true];
+                return ['success' => true, 'regraded' => $force_regrade];
             }
             
             return ['success' => false, 'error' => get_string('error_no_feedback', 'local_aigrade')];

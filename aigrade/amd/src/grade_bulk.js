@@ -21,16 +21,16 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Ajax, Notification, Str) {
+define(['jquery', 'core/notification'], function($, Notification) {
 
     return {
         /**
          * Initialize the grade bulk button
-         * @param {int} cmid The course module ID
+         * @param {string} buttonUrl The URL for the AJAX request
          * @param {string} buttonText The text to display on the button
+         * @param {string} sesskey The session key
          */
-        init: function(cmid, buttonText) {
-
+        init: function(buttonUrl, buttonText, sesskey) {
             var insertButton = function() {
                 // Don't insert if button already exists
                 if ($('.aigrade-button-injected').length > 0) {
@@ -46,123 +46,83 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                         var btn = $(this);
                         var originalText = btn.text();
 
-                        Str.get_strings([
-                            {key: 'confirm_bulk_grade', component: 'local_aigrade'},
-                            {key: 'grading_in_progress', component: 'local_aigrade'},
-                            {key: 'success_graded_count', component: 'local_aigrade'},
-                            {key: 'error_with_message', component: 'local_aigrade'},
-                            {key: 'error_unknown', component: 'local_aigrade'},
-                            {key: 'error_server_communication', component: 'local_aigrade'}
-                        ]).done(function(strings) {
-                            if (!confirm(strings[0])) {
-                                return;
-                            }
+                        if (!confirm('Grade all ungraded submissions with AI? This may take a few moments.')) {
+                            return;
+                        }
 
-                            btn.prop('disabled', true).text(strings[1]);
+                        btn.prop('disabled', true).text('Grading all submissions...');
 
-                            Ajax.call([{
-                                methodname: 'local_aigrade_grade_bulk',
-                                args: {
-                                    cmid: cmid
-                                }
-                            }])[0].done(function(response) {
+                        $.ajax({
+                            url: buttonUrl + '&action=grade&sesskey=' + sesskey,
+                            method: 'POST',
+                            dataType: 'json',
+                            success: function(response) {
                                 if (response.success) {
                                     Notification.addNotification({
-                                        message: strings[2].replace('{$a}', response.count),
+                                        message: 'Successfully graded ' + response.count + ' submission(s).',
                                         type: 'success'
                                     });
                                     window.location.reload();
                                 } else {
-                                    var errorMsg = response.error || strings[4];
                                     Notification.addNotification({
-                                        message: strings[3].replace('{$a}', errorMsg),
+                                        message: 'Error: ' + (response.error || 'Unknown error occurred'),
                                         type: 'error'
                                     });
                                     btn.prop('disabled', false).text(originalText);
                                 }
-                            }).fail(function(error) {
-                                var errorMsg = error.message || strings[4];
+                            },
+                            error: function(xhr, status, error) {
                                 Notification.addNotification({
-                                    message: strings[5].replace('{$a}', errorMsg),
+                                    message: 'Error communicating with server: ' + error,
                                     type: 'error'
                                 });
                                 btn.prop('disabled', false).text(originalText);
-                            });
-                        }).fail(function() {
-                            // Fallback if string fetch fails - use English defaults
-                            if (!confirm('Grade all ungraded submissions with AI? This may take a few moments.')) {
-                                return;
                             }
-
-                            btn.prop('disabled', true).text('Grading all submissions...');
-
-                            Ajax.call([{
-                                methodname: 'local_aigrade_grade_bulk',
-                                args: {
-                                    cmid: cmid
-                                }
-                            }])[0].done(function(response) {
-                                if (response.success) {
-                                    alert('Successfully graded ' + response.count + ' submission(s).');
-                                    window.location.reload();
-                                } else {
-                                    alert('Error: ' + (response.error || 'Unknown error occurred'));
-                                    btn.prop('disabled', false).text(originalText);
-                                }
-                            }).fail(function(error) {
-                                alert('Error communicating with server: ' + (error.message || 'Unknown error'));
-                                btn.prop('disabled', false).text(originalText);
-                            });
                         });
                     });
 
-                // Try multiple insertion points
-                var inserted = false;
+                var container = $('<div>')
+                    .addClass('mb-3')
+                    .append(button);
 
-                // Option 1: Tertiary navigation (preferred in Moodle 4.x)
-                if ($('.tertiary-navigation').length) {
-                    $('.tertiary-navigation').first().prepend($('<div>').css('display', 'inline-block').append(button));
-                    inserted = true;
+                // Insert before the submissions table
+                var submissionsTable = $('table.flexible, table.generaltable').first();
+                if (submissionsTable.length) {
+                    submissionsTable.before(container);
+                    return true;
                 }
 
-                // Option 2: After page header
-                if (!inserted && $('#page-header').length) {
-                    $('#page-header').first().after($('<div>').addClass('alert alert-info').css('margin', '15px').append(button));
-                    inserted = true;
+                // Fallback: insert at top of main content
+                var mainContent = $('#region-main').first();
+                if (mainContent.length) {
+                    mainContent.prepend(container);
+                    return true;
                 }
 
-                // Option 3: Prepend to page content
-                if (!inserted && $('#page-content').length) {
-                    $('#page-content').prepend($('<div>').addClass('alert alert-info').css('margin', '15px').append(button));
-                    inserted = true;
-                }
-
-                return inserted;
+                return false;
             };
 
-            // Wait for DOM to be ready, then try to insert
+            // Try to insert button immediately
+            setTimeout(insertButton, 100);
+
+            // Try after DOM ready
             $(document).ready(function() {
-                // Try immediately
-                var inserted = insertButton();
-
-                // If not inserted, set up interval checking
-                if (!inserted) {
-                    var checkCount = 0;
-                    var maxChecks = 10; // Check for 5 seconds
-
-                    var insertInterval = setInterval(function() {
-                        checkCount++;
-                        if (insertButton() || checkCount >= maxChecks) {
-                            clearInterval(insertInterval);
-                        }
-                    }, 500);
-                }
+                setTimeout(insertButton, 100);
             });
 
-            // Also try on window load as backup
+            // Try after window load
             $(window).on('load', function() {
-                insertButton();
+                setTimeout(insertButton, 200);
             });
+
+            // Periodic checking as fallback
+            var checkCount = 0;
+            var checkInterval = setInterval(function() {
+                checkCount++;
+                if (insertButton() || checkCount >= 20) {
+                    clearInterval(checkInterval);
+                }
+            }, 500);
         }
     };
 });

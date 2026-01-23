@@ -2,6 +2,35 @@
 
 All notable changes to the AI Grade plugin will be documented in this file.
 
+## [1.7.0] - 2026-01-22
+
+### Fixed
+- **Bulk Grading Error Handling**: Fixed "Error communicating with server" when all submissions are already graded
+  - Now correctly shows "No ungraded submissions found" message
+  - Fixed JavaScript to use proper URL format instead of just module ID
+  - Updated grade_bulk.js to match grade_single.js parameter style
+- **Single Grading Regrade Confirmation**: Added confirmation dialog for already-graded submissions
+  - First click shows: "This submission is already graded. Do you want to regrade it with AI?"
+  - Button changes to yellow "Regrade with AI" after first click
+  - Prevents accidental regrading of submissions
+  - Added `force_regrade` parameter to grader.php
+- **Dynamic User ID Resolution**: Fixed single grading not working on initial page load
+  - JavaScript now dynamically extracts userid from page URL
+  - No longer requires page refresh to grade individual submissions
+  - Handles Moodle's AJAX-based userid parameter loading
+
+### Changed
+- Updated lib.php to pass full moodle_url objects to JavaScript modules instead of just IDs
+- Modified grade_single.php to accept and handle `force_regrade` parameter
+- Enhanced grader.php `grade_single_submission()` method to check if submission is already graded
+- Improved error messages and user feedback throughout grading workflow
+
+### Technical
+- Fixed AMD module parameter passing from PHP to JavaScript
+- Added proper sesskey handling in AJAX requests
+- Improved JavaScript URL construction for both single and bulk grading
+- Added URLSearchParams usage for dynamic parameter extraction
+
 ## [1.6.0] - 2026-01-20
 
 ### Added

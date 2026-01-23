@@ -251,10 +251,6 @@ function local_aigrade_coursemodule_edit_post_actions($data, $course) {
  */
 function local_aigrade_before_footer() {
     global $PAGE, $DB;
-        
-    // TEMPORARY DEBUG
-    //error_log('AI Grade Debug - Page type: ' . $PAGE->pagetype);
-    //error_log('AI Grade Debug - Module name: ' . ($PAGE->cm ? $PAGE->cm->modname : 'no cm'));
 
     // Only on assignment module pages
     if ($PAGE->pagetype !== 'mod-assign-view' && 
@@ -285,14 +281,7 @@ function local_aigrade_before_footer() {
     // Determine if we're on individual grading page or bulk grading page
     $action = optional_param('action', '', PARAM_ALPHA);
     $userid = optional_param('userid', 0, PARAM_INT);
-    // Load individual grading script if action is 'grader', even without userid yet
-    // (userid gets added via AJAX on initial page load)
     $is_individual = ($action === 'grader');
-    
-    // TEMPORARY DEBUG
-    //error_log('AI Grade Debug - Action: ' . $action);
-    //error_log('AI Grade Debug - UserID: ' . $userid);
-    //error_log('AI Grade Debug - Is Individual: ' . ($is_individual ? 'YES' : 'NO'));
     
     // Get custom AI name
     $ai_name = get_config('local_aigrade', 'ai_name');
@@ -300,26 +289,34 @@ function local_aigrade_before_footer() {
         $ai_name = 'AI';
     }
     
+    // Get sesskey
+    $sesskey = sesskey();
+    
     // Load appropriate AMD module
     if ($is_individual) {
+        $url = new moodle_url('/local/aigrade/grade_single.php', ['id' => $cm->id, 'userid' => $userid]);
         $button_text = get_string('button_grade_single', 'local_aigrade', $ai_name);
         
         $PAGE->requires->js_call_amd('local_aigrade/grade_single', 'init', [
-            $cm->id,
-            $userid,
-            $button_text
+            $url->out(false),
+            $button_text,
+            $sesskey
         ]);
     } else {
+        $url = new moodle_url('/local/aigrade/grade.php', ['id' => $cm->id]);
         $button_text = get_string('button_grade_bulk', 'local_aigrade', $ai_name);
         
         $PAGE->requires->js_call_amd('local_aigrade/grade_bulk', 'init', [
-            $cm->id,
-            $button_text
+            $url->out(false),
+            $button_text,
+            $sesskey
         ]);
     }
     
     return '';
-    /**
+}
+
+/**
  * Serves the plugin's backup/restore functionality
  *
  * @return array
@@ -333,5 +330,4 @@ function local_aigrade_backup_callback() {
             'mod/assign' => 'backup/moodle2/restore_local_aigrade_plugin.class.php',
         ],
     ];
-}
 }
