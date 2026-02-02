@@ -2,6 +2,13 @@
 
 All notable changes to the AI Grade plugin will be documented in this file.
 
+## [1.7.1] - 2026-02-02
+
+### Fixed
+
+- **Greoup Selection**: Fixed grading a single group
+  - Only the selected group is now graded when using "AI Grade All"
+
 ## [1.7.0] - 2026-01-22
 
 ### Fixed

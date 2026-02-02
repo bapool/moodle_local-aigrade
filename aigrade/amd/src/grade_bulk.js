@@ -46,6 +46,11 @@ define(['jquery', 'core/notification'], function($, Notification) {
                         var btn = $(this);
                         var originalText = btn.text();
 
+                        // Get group parameter from current page URL
+                        var urlParams = new URLSearchParams(window.location.search);
+                        var groupParam = urlParams.get('group') || '';
+                        var groupQuery = groupParam ? '&group=' + groupParam : '';
+
                         if (!confirm('Grade all ungraded submissions with AI? This may take a few moments.')) {
                             return;
                         }
@@ -53,7 +58,7 @@ define(['jquery', 'core/notification'], function($, Notification) {
                         btn.prop('disabled', true).text('Grading all submissions...');
 
                         $.ajax({
-                            url: buttonUrl + '&action=grade&sesskey=' + sesskey,
+                            url: buttonUrl + '&action=grade&sesskey=' + sesskey + groupQuery,
                             method: 'POST',
                             dataType: 'json',
                             success: function(response) {

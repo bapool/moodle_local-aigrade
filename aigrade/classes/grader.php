@@ -366,7 +366,8 @@ class grader {
      * @return array Array of submissions keyed by userid
      */
     private function get_ungraded_submissions() {
-        $submissions = $this->assignment->list_participants(null, false);
+        $groupid = optional_param('group', 0, PARAM_INT);
+        $submissions = $this->assignment->list_participants($groupid, false);
         $ungraded = [];
         
         foreach ($submissions as $userid => $participant) {
