@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/aigrade/db" VERSION="20250119" COMMENT="XMLDB file for Moodle local/aigrade"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
+>
+  <TABLES>
+    <TABLE NAME="local_aigrade_config" COMMENT="AI grading configuration per assignment">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="assignmentid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Assignment ID"/>
+        <FIELD NAME="enabled" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="AI grading enabled"/>
+        <FIELD NAME="instructions" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Legacy instructions field"/>
+        <FIELD NAME="instructions_with_rubric" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="AI instructions when rubric is uploaded"/>
+        <FIELD NAME="instructions_without_rubric" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="AI instructions when no rubric"/>
+        <FIELD NAME="grade_level" TYPE="char" LENGTH="10" NOTNULL="false" DEFAULT="9" SEQUENCE="false" COMMENT="Grade level for age-appropriate feedback"/>
+        <FIELD NAME="rubricfile" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="File ID of uploaded rubric"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="assignmentid" TYPE="foreign" FIELDS="assignmentid" REFTABLE="assign" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="assignmentid_idx" UNIQUE="false" FIELDS="assignmentid"/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>

@@ -1,0 +1,44 @@
+/* This file is part of Moodle - http://moodle.org/
+ *
+ * Moodle is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Moodle is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/**
+ * Styles for local_aigrade plugin
+ *
+ * @package    local_aigrade
+ * @copyright  2025 Brian A. Pool, National Trail Local Schools
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+/* Button container for AI Grade buttons */
+.path-mod-assign .local_aigrade-button-container {
+    margin: 15px 0;
+    padding: 10px;
+    background-color: #d9edf7;
+    border: 1px solid #bce8f1;
+    border-radius: 4px;
+}
+
+/* Individual grading button */
+.path-mod-assign .aigrade-single-button {
+    margin: 10px 0;
+    display: inline-block;
+}
+
+/* Bulk grading button */
+.path-mod-assign .aigrade-button-injected {
+    margin: 10px 5px;
+    display: inline-block;
+}
