@@ -18,7 +18,7 @@
  * Upgrade script for local_aigrade
  *
  * @package    local_aigrade
- * @copyright  2025 Brian A. Pool, National Trail Local Schools
+ * @copyright  2026 Brian A. Pool, National Trail Local Schools
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -113,19 +113,23 @@ function xmldb_local_aigrade_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2025012005, 'local', 'aigrade');
     }
 
-    if ($oldversion < 2026012000) {
-        // Add grading_strictness field to local_aigrade_config
+    if ($oldversion < 2026031100) {
+        // Add grading_strictness field to local_aigrade_config.
+        // This step was previously at 2026012000 but the column was inadvertently omitted from
+        // install.xml, so some existing installs may never have received this field. Bumping the
+        // version ensures the field is added on all existing installations. The field_exists check
+        // below makes this safe to run even if the column is already present.
         $table = new xmldb_table('local_aigrade_config');
-        
-        // Field: grading_strictness - allows teachers to override grade-level strictness
-        // Default 'standard' means use the grade-level appropriate strictness
+
+        // Field: grading_strictness - allows teachers to override grade-level strictness.
+        // Default 'standard' means use the grade-level appropriate strictness.
         $field = new xmldb_field('grading_strictness', XMLDB_TYPE_CHAR, '20', null, null, null, 'standard', 'grade_level');
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
 
         // Aigrade savepoint reached.
-        upgrade_plugin_savepoint(true, 2026012000, 'local', 'aigrade');
+        upgrade_plugin_savepoint(true, 2026031100, 'local', 'aigrade');
     }
 
     return true;

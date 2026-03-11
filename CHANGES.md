@@ -2,11 +2,20 @@
 
 All notable changes to the AI Grade plugin will be documented in this file.
 
+## [1.7.2] - 2026-03-11
+
+### Fixed
+
+- **Grading Strictness Selection**: The changes were not being saved to the DB and all grading was returning to the present.  This is fixed and being sent to the AI.
+- **AI Prompt boxes**: The AI prompt for grading is chnaged to a standard html block, allowing you to go fullscreen and make changes more easily.
+- **AI Prompt checking**: The AI prompts are saved into /tmp/aigrade_debug for checking of the AI activity.  These are deleted when they are over 2 hours old.
+
+
 ## [1.7.1] - 2026-02-02
 
 ### Fixed
 
-- **Greoup Selection**: Fixed grading a single group
+- **Group Selection**: Fixed grading a single group
   - Only the selected group is now graded when using "AI Grade All"
 
 ## [1.7.0] - 2026-01-22

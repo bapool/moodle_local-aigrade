@@ -18,7 +18,7 @@
  * Library functions for local_aigrade
  *
  * @package    local_aigrade
- * @copyright  2025 Brian A. Pool, National Trail Local Schools
+ * @copyright  2026 Brian A. Pool, National Trail Local Schools
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -103,30 +103,44 @@ function local_aigrade_coursemodule_standard_elements($formwrapper, $mform) {
         $mform->setDefault('aigrade_grading_strictness', 'standard');
     }
     
-    // AI instructions WITH rubric
-    $mform->addElement('textarea', 'aigrade_instructions_with_rubric', 
+    // AI instructions WITH rubric - full Moodle editor
+    $mform->addElement('editor', 'aigrade_instructions_with_rubric_editor',
         get_string('aigrade_instructions_with_rubric_field', 'local_aigrade'),
-        'rows="8" cols="80"');
-    $mform->addHelpButton('aigrade_instructions_with_rubric', 'aigrade_instructions_with_rubric_field', 'local_aigrade');
-    $mform->disabledIf('aigrade_instructions_with_rubric', 'aigrade_enabled');
+        ['rows' => 8],
+        ['maxfiles' => 0, 'noclean' => true, 'context' => \context_system::instance()]);
+    $mform->addHelpButton('aigrade_instructions_with_rubric_editor', 'aigrade_instructions_with_rubric_field', 'local_aigrade');
+    $mform->disabledIf('aigrade_instructions_with_rubric_editor', 'aigrade_enabled');
     if ($aiconfig && !empty($aiconfig->instructions_with_rubric)) {
-        $mform->setDefault('aigrade_instructions_with_rubric', $aiconfig->instructions_with_rubric);
+        $mform->setDefault('aigrade_instructions_with_rubric_editor', [
+            'text'   => $aiconfig->instructions_with_rubric,
+            'format' => FORMAT_HTML,
+        ]);
     } else {
         $default = get_config('local_aigrade', 'default_instructions_with_rubric');
-        $mform->setDefault('aigrade_instructions_with_rubric', $default);
+        $mform->setDefault('aigrade_instructions_with_rubric_editor', [
+            'text'   => (string)$default,
+            'format' => FORMAT_HTML,
+        ]);
     }
     
-    // AI instructions WITHOUT rubric
-    $mform->addElement('textarea', 'aigrade_instructions_without_rubric', 
+    // AI instructions WITHOUT rubric - full Moodle editor
+    $mform->addElement('editor', 'aigrade_instructions_without_rubric_editor',
         get_string('aigrade_instructions_without_rubric_field', 'local_aigrade'),
-        'rows="8" cols="80"');
-    $mform->addHelpButton('aigrade_instructions_without_rubric', 'aigrade_instructions_without_rubric_field', 'local_aigrade');
-    $mform->disabledIf('aigrade_instructions_without_rubric', 'aigrade_enabled');
+        ['rows' => 8],
+        ['maxfiles' => 0, 'noclean' => true, 'context' => \context_system::instance()]);
+    $mform->addHelpButton('aigrade_instructions_without_rubric_editor', 'aigrade_instructions_without_rubric_field', 'local_aigrade');
+    $mform->disabledIf('aigrade_instructions_without_rubric_editor', 'aigrade_enabled');
     if ($aiconfig && !empty($aiconfig->instructions_without_rubric)) {
-        $mform->setDefault('aigrade_instructions_without_rubric', $aiconfig->instructions_without_rubric);
+        $mform->setDefault('aigrade_instructions_without_rubric_editor', [
+            'text'   => $aiconfig->instructions_without_rubric,
+            'format' => FORMAT_HTML,
+        ]);
     } else {
         $default = get_config('local_aigrade', 'default_instructions_without_rubric');
-        $mform->setDefault('aigrade_instructions_without_rubric', $default);
+        $mform->setDefault('aigrade_instructions_without_rubric_editor', [
+            'text'   => (string)$default,
+            'format' => FORMAT_HTML,
+        ]);
     }
     
     // Rubric file upload
@@ -216,8 +230,22 @@ function local_aigrade_coursemodule_edit_post_actions($data, $course) {
     $record->enabled = isset($data->aigrade_enabled) ? $data->aigrade_enabled : 0;
     $record->grade_level = isset($data->aigrade_grade_level) ? $data->aigrade_grade_level : '9';
     $record->grading_strictness = isset($data->aigrade_grading_strictness) ? $data->aigrade_grading_strictness : 'standard';
-    $record->instructions_with_rubric = isset($data->aigrade_instructions_with_rubric) ? $data->aigrade_instructions_with_rubric : '';
-    $record->instructions_without_rubric = isset($data->aigrade_instructions_without_rubric) ? $data->aigrade_instructions_without_rubric : '';
+
+    // Editor elements submit as arrays with 'text' and 'format' keys.
+    if (isset($data->aigrade_instructions_with_rubric_editor)) {
+        $record->instructions_with_rubric = is_array($data->aigrade_instructions_with_rubric_editor)
+            ? $data->aigrade_instructions_with_rubric_editor['text']
+            : $data->aigrade_instructions_with_rubric_editor;
+    } else {
+        $record->instructions_with_rubric = '';
+    }
+    if (isset($data->aigrade_instructions_without_rubric_editor)) {
+        $record->instructions_without_rubric = is_array($data->aigrade_instructions_without_rubric_editor)
+            ? $data->aigrade_instructions_without_rubric_editor['text']
+            : $data->aigrade_instructions_without_rubric_editor;
+    } else {
+        $record->instructions_without_rubric = '';
+    }
     $record->timemodified = time();
     
     if ($config) {

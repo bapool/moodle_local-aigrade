@@ -13,6 +13,7 @@
         <FIELD NAME="instructions_with_rubric" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="AI instructions when rubric is uploaded"/>
         <FIELD NAME="instructions_without_rubric" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="AI instructions when no rubric"/>
         <FIELD NAME="grade_level" TYPE="char" LENGTH="10" NOTNULL="false" DEFAULT="9" SEQUENCE="false" COMMENT="Grade level for age-appropriate feedback"/>
+        <FIELD NAME="grading_strictness" TYPE="char" LENGTH="20" NOTNULL="false" DEFAULT="standard" SEQUENCE="false" COMMENT="Grading strictness override (very_lenient, lenient, standard, rigorous, very_rigorous)"/>
         <FIELD NAME="rubricfile" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="File ID of uploaded rubric"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
