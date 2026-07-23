@@ -233,16 +233,28 @@ function local_aigrade_coursemodule_edit_post_actions($data, $course) {
 
     // Editor elements submit as arrays with 'text' and 'format' keys.
     if (isset($data->aigrade_instructions_with_rubric_editor)) {
-        $record->instructions_with_rubric = is_array($data->aigrade_instructions_with_rubric_editor)
-            ? $data->aigrade_instructions_with_rubric_editor['text']
-            : $data->aigrade_instructions_with_rubric_editor;
+        if (is_array($data->aigrade_instructions_with_rubric_editor)) {
+            if (isset($data->aigrade_instructions_with_rubric_editor['text'])) {
+                $record->instructions_with_rubric = $data->aigrade_instructions_with_rubric_editor['text'];
+            } else {
+                $record->instructions_with_rubric = '';
+            }
+        } else {
+            $record->instructions_with_rubric = $data->aigrade_instructions_with_rubric_editor;
+        }
     } else {
         $record->instructions_with_rubric = '';
     }
     if (isset($data->aigrade_instructions_without_rubric_editor)) {
-        $record->instructions_without_rubric = is_array($data->aigrade_instructions_without_rubric_editor)
-            ? $data->aigrade_instructions_without_rubric_editor['text']
-            : $data->aigrade_instructions_without_rubric_editor;
+        if (is_array($data->aigrade_instructions_without_rubric_editor)) {
+            if (isset($data->aigrade_instructions_without_rubric_editor['text'])) {
+                $record->instructions_without_rubric = $data->aigrade_instructions_without_rubric_editor['text'];
+            } else {
+                $record->instructions_without_rubric = '';
+            }
+        } else {
+            $record->instructions_without_rubric = $data->aigrade_instructions_without_rubric_editor;
+        }
     } else {
         $record->instructions_without_rubric = '';
     }
